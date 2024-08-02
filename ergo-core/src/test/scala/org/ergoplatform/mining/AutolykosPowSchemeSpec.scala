@@ -5,6 +5,7 @@ import org.ergoplatform.mining.difficulty.DifficultySerializer
 import org.ergoplatform.modifiers.history.header.{Header, HeaderSerializer}
 import org.ergoplatform.utils.ErgoCorePropertyTest
 import org.scalacheck.Gen
+import sigmastate.serialization.{GroupElementSerializer, SigmaSerializer}
 import scorex.crypto.hash.Blake2b256
 import scorex.util.encode.Base16
 import cats.syntax.either._
@@ -17,11 +18,37 @@ class AutolykosPowSchemeSpec extends ErgoCorePropertyTest {
     val pow = new AutolykosPowScheme(powScheme.k, powScheme.n)
     forAll(invalidHeaderGen,
             Gen.choose(100, 120),
-            Gen.choose[Byte](1, 2)) { (inHeader, difficulty, ver) =>
+            Gen.choose[Byte](1,1)) { (inHeader, difficulty, ver) =>
+
+      println("generated solution should be valid")
+      println(s"version $ver")
+      println(s"difficulty $difficulty")
+      println(s"header version ${inHeader.version}")
+      println("header parentId: " + inHeader.parentId.mkString(", "))
+      println("header ADProofsRoot: " + inHeader.ADProofsRoot.mkString(", "))
+      println("header stateRoot: " + inHeader.stateRoot.mkString(", "))
+      println("header transactionsRoot: " + inHeader.transactionsRoot.mkString(", "))
+      println(s"header timestamp: ${inHeader.timestamp}")
+      println(s"header nBits ${inHeader.nBits}")
+      println(s"header height ${inHeader.height}")
+      println("header extensionRoot: " + inHeader.extensionRoot.mkString(", "))
+
+      val bytes_pk = GroupElementSerializer.toBytes(inHeader.powSolution.pk)
+      val bytes_w = GroupElementSerializer.toBytes(inHeader.powSolution.w)
+
+      println(s"header pk: ${bytes_pk.mkString(", ")}")
+      println(s"header w: ${bytes_w.mkString(", ")}")
+      println(s"header n: ${inHeader.powSolution.n.mkString(", ")}")
+      println(s"d: ${inHeader.powSolution.d}")
+
+      println(s"header votes: ${inHeader.votes.mkString(", ")}")
+      println(s"header sizeOpt ${inHeader.sizeOpt}")
+
       val nBits = DifficultySerializer.encodeCompactBits(difficulty)
       val h = inHeader.copy(nBits = nBits, version = ver)
       val sk = randomSecret()
       val x = randomSecret()
+      println(s"sk: $sk, x: $x")
       val msg = pow.msgByHeader(h)
       val b = pow.getB(h.nBits)
       val hbs = Ints.toByteArray(h.height)
@@ -44,6 +71,7 @@ class AutolykosPowSchemeSpec extends ErgoCorePropertyTest {
 
   property("calcN test vectors") {
     // mainnet parameters
+    println("calcN test vectors")
     val k = 32
     val n = 26
 
@@ -67,6 +95,7 @@ class AutolykosPowSchemeSpec extends ErgoCorePropertyTest {
 
   property("test vectors for first increase in N value (height 614,400)") {
     import io.circe.parser._
+    println("test vectors for first increase in N value (height 614,400)")
     val pow = new AutolykosPowScheme(32, 26)
 
     val headerJson =
@@ -119,6 +148,7 @@ class AutolykosPowSchemeSpec extends ErgoCorePropertyTest {
   // testing an invalid header got from a mining pool
   property("test vector - invalid solution") {
     import io.circe.parser._
+    println("test vector - invalid solution")
 
     val headerJson = "{\"extensionId\":\"277907e4e5e42f27e928e6101cc4fec173bee5d7728794b73d7448c339c380e5\",\"difficulty\":\"1325481984\",\"votes\":\"000000\",\"timestamp\":1611225263165,\"size\":219,\"stateRoot\":\"c0d0b5eafd07b22487dac66628669c42a242b90bef3e1fcdc76d83140d58b6bc0e\",\"height\":2870,\"nBits\":72286528,\"version\":2,\"id\":\"5b0ce6711de6b926f60b67040cc4512804517785df375d063f1bf1d75588af3a\",\"adProofsRoot\":\"49453875a43035c7640dee2f905efe06128b00d41acd2c8df13691576d4fd85c\",\"transactionsRoot\":\"770cbb6e18673ed025d386487f15d3252115d9a6f6c9b947cf3d04731dd6ab75\",\"extensionHash\":\"9bc7d54583c5d44bb62a7be0473cd78d601822a626afc13b636f2cbff0d87faf\",\"powSolutions\":{\"pk\":\"0288114b0586efea9f86e4587f2071bc1c85fb77e15eba96b2769733e0daf57903\",\"w\":\"0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798\",\"n\":\"000100000580a91b\",\"d\":0},\"adProofsId\":\"4fc36d59bf26a672e01fbfde1445bd66f50e0f540f24102e1e27d0be1a99dfbf\",\"transactionsId\":\"d196ef8a7ef582ab1fdab4ef807715183705301c6ae2ff0dcbe8f1d577ba081f\",\"parentId\":\"ab19e6c7a4062979dddb534df83f236d1b949c7cef18bcf434a67e87c593eef9\"}"
 

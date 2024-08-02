@@ -17,6 +17,7 @@ import scorex.crypto.hash.{Blake2b256, Digest32}
 import scorex.util.{ModifierId, ScorexLogging}
 import sigmastate.crypto.DLogProtocol.ProveDlog
 import sigmastate.crypto.CryptoFacade
+import sigmastate.serialization.{GroupElementSerializer, SigmaSerializer}
 
 import scala.annotation.tailrec
 import scala.util.Try
@@ -232,11 +233,19 @@ class AutolykosPowScheme(val k: Int, val n: Int) extends ScorexLogging {
                          indexBytes: Array[Byte],
                          heightBytes: => Array[Byte] // not used in v1
                         ): BigInt = {
+    //println("input m: " + m.mkString(", "))
+    //println("input pk: " + pk.mkString(", "))
+    //println("input w: " + w.mkString(", "))
+    //println("input indexBytes: " + indexBytes.mkString(", "))
+    //println("input heightBytes: " + heightBytes.mkString(", "))
+    //println("input heightBytes: " + heightBytes.mkString(", "))
     if (version == 1) {
       // Autolykos v. 1: H(j|M|pk|m|w) (line 5 from the Algo 2 of the spec)
       hashModQ(Bytes.concat(indexBytes, M, pk, m, w))
     } else {
       // Autolykos v. 2: H(j|h|M) (line 5 from the Algo 2 of the spec)
+     // val result = toBigInt(hash(Bytes.concat(indexBytes, heightBytes, M)).drop(1))
+     // println(s"result $result")
       toBigInt(hash(Bytes.concat(indexBytes, heightBytes, M)).drop(1))
     }
   }
@@ -337,8 +346,19 @@ class AutolykosPowScheme(val k: Int, val n: Int) extends ScorexLogging {
                                   startNonce: Long,
                                   endNonce: Long): Option[AutolykosSolution] = {
     log.debug(s"Going to check nonces from $startNonce to $endNonce")
+
+    println("Going to check nonces")
     val p1 = groupElemToBytes(genPk(sk))
     val p2 = groupElemToBytes(genPk(x))
+
+    val genpk_sk = GroupElementSerializer.toBytes(genPk(sk))
+    val genpk_x = GroupElementSerializer.toBytes(genPk(x))
+    println(s"input sk $sk")
+    println(s"input x $x")
+    println("genpk_sk: " + genpk_sk.mkString(", "))
+    println("genpk_x: " + genpk_x.mkString(", "))
+    println("out p1: " + p1.mkString(", "))
+    println("out p2: " + p2.mkString(", "))
 
     @tailrec
     def loop(i: Long): Option[AutolykosSolution] = if (i == endNonce) {

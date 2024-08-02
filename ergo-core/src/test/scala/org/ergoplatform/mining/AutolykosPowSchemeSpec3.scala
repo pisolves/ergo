@@ -65,9 +65,9 @@ class AutolykosPowSchemeSpec3 extends ErgoCorePropertyTest {
 
     pow.validate(header) shouldBe 'success
 
-    val result = pow.validate(header)
-    println(s"\nSuccessfully inrease n value header: $header")
-    println(s"Result: $result")
+    //val result = pow.validate(header)
+    //println(s"\nSuccessfully inrease n value header: $header")
+    //println(s"Result: $result")
   }
 
 }
