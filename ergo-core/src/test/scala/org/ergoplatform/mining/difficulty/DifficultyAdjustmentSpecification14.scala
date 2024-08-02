@@ -30,6 +30,11 @@ class DifficultyAdjustmentSpecification14 extends ErgoCorePropertyTest {
     val step = 1000
     forAll(defaultHeaderGen, smallPositiveInt, smallPositiveInt, Gen.choose(1, 60 * 60 * 1000)) { (header: Header, epoch, useLastEpochs, interval) =>
       whenever(useLastEpochs > 1) {
+        println(s"input Header nBits: ${header.nBits}")
+        println(s"input Header timestamp: ${header.timestamp}, height: ${header.height}")
+        println(s"input chainsetting useLastEpochs: $useLastEpochs")
+        println(s"Input chainsetting epoch: $epoch")
+        println(s"Input chaingsetting interval: ${interval.millis}")
         val control = new DifficultyAdjustment(chainSettingsMod(interval.millis, useLastEpochs, epoch))
         val previousHeaders = control.previousHeightsRequiredForRecalculation(epoch * useLastEpochs + 1, epoch).map { i =>
           header.copy(timestamp = header.timestamp + i * interval,
@@ -40,7 +45,9 @@ class DifficultyAdjustmentSpecification14 extends ErgoCorePropertyTest {
         previousHeaders.length shouldBe useLastEpochs + 1
         val expectedDifficulty = previousHeaders.last.requiredDifficulty + step
         val error = BigDecimal(control.calculate(previousHeaders, epoch) - expectedDifficulty) / BigDecimal(expectedDifficulty)
-        error should be < BigDecimal(1) / DifficultyAdjustment.PrecisionConstant
+        println(s"expectedDifficulty:$expectedDifficulty")
+        println(s"error:$error")
+        val err = error should be < BigDecimal(1) / DifficultyAdjustment.PrecisionConstant
       }
     }
   }

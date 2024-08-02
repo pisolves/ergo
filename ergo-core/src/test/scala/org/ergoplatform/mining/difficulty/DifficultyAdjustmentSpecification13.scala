@@ -29,9 +29,18 @@ class DifficultyAdjustmentSpecification13 extends ErgoCorePropertyTest {
   property("calculate() for different epoch lengths and constant hashrate") {
     forAll(defaultHeaderGen, smallPositiveInt, smallPositiveInt, Gen.choose(1, 60 * 60 * 1000)) { (header: Header, epoch, useLastEpochs, interval) =>
       whenever(useLastEpochs > 1 && header.requiredDifficulty >= 1) {
+        println(s"input Header nBits: ${header.nBits}")
+        println(s"input Header timestamp: ${header.timestamp}, height: ${header.height}")
+        println(s"input chainsetting useLastEpochs: $useLastEpochs")
+        println(s"Input chainsetting epoch: $epoch")
+        println(s"Input chaingsetting interval: ${interval.millis}")
         val control = new DifficultyAdjustment(chainSettingsMod(interval.millis, useLastEpochs, epoch))
-        val previousHeaders = control.previousHeightsRequiredForRecalculation(epoch * useLastEpochs + 1, epoch)
-          .map(i => header.copy(timestamp = header.timestamp + i * interval, height = i))
+        val previousHeaders = control.previousHeightsRequiredForRecalculation(epoch * useLastEpochs + 1, epoch) //Number of height
+          .map { i =>
+          val updatedHeader = header.copy(timestamp = header.timestamp + i * interval, height = i)
+          println(s"updatedHeader timestamp: ${header.timestamp + i * interval}, height: ${i}")
+          updatedHeader
+          }
         previousHeaders.length shouldBe useLastEpochs + 1
         control.calculate(previousHeaders, epoch) shouldBe header.requiredDifficulty
       }
